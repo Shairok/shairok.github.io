@@ -41,7 +41,7 @@ body {
     align-items: center;
     flex-direction: row;
     flex-wrap: wrap;
-    gap: 30px;
+    gap: 10px;
 
 }
 
@@ -58,11 +58,11 @@ body {
     padding: 0 40px;
 
     &__img {
-        background: linear-gradient(180deg, var(--brand-color1) 0.13%, var(--brand-color2) 101.72%);
+        // background: linear-gradient(180deg, var(--brand-color1) 0.13%, var(--brand-color2) 101.72%);
         padding: 2px;
-        border-radius: 22px;
-        width: 44px;
-        height: 45px;
+        // border-radius: 50%;
+        width: 85px;
+        height: 85px;
         flex-shrink: 0;
     }
 }

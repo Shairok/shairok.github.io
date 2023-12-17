@@ -127,7 +127,7 @@ body {
   align-items: center;
   flex-direction: row;
   flex-wrap: wrap;
-  gap: 30px;
+  gap: 10px;
 }
 
 .header-title {
@@ -143,11 +143,9 @@ body {
   padding: 0 40px;
 }
 .hero-profile__img {
-  background: linear-gradient(180deg, var(--brand-color1) 0.13%, var(--brand-color2) 101.72%);
   padding: 2px;
-  border-radius: 22px;
-  width: 44px;
-  height: 45px;
+  width: 85px;
+  height: 85px;
   flex-shrink: 0;
 }
 
