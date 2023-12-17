@@ -349,6 +349,8 @@ body {
     background-color: var(--low-color);
 }
 
+
+
 .material-symbols-outlined {
     font-variation-settings:
         'FILL' 0,
@@ -371,6 +373,7 @@ body {
 
     &__item {
         position: relative;
+        opacity: 1;
         display: flex;
         flex-direction: row;
         align-items: center;
@@ -378,6 +381,17 @@ body {
         height: 80px;
         background-color: var(--bg-color2);
         border-radius: 8px;
+        transition: opacity 0.9s ease;
+
+
+        &.hidden {
+            opacity: 0;
+            /* Устанавливаем opacity на 0 при добавлении класса hidden */
+            pointer-events: none;
+            /* Опционально, чтобы предотвратить взаимодействие с скрытым элементом */
+            visibility: hidden;
+            display: none;
+        }
 
     }
 
@@ -516,6 +530,7 @@ body {
 }
 
 .later {}
+
 
 .footer {
     position: absolute;

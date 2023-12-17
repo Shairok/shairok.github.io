@@ -43,53 +43,30 @@ function saveTodoDB() {
 function addTask(event) {
     event.preventDefault();
     const taskText = todoTaskText.value.trim();
-    if (!taskText) {
-        alert("Введите задачу");
-        return;
-    }
-    // Проверка на наличие выбранной даты
-    if (!todoTaskDate.valueAsDate) {
-        alert("Выберите дату");
-        return;
-    }
-    const taskDate = todoTaskDate.valueAsDate.toLocaleDateString('en-us', { day: 'numeric', month: 'short' });
-    // Определение приоритета задачи
-    let taskPriority = "";
-    for (const priority of todoTaskPriority) {
-        if (priority.checked) {
-            taskPriority = priority.value;
-            break;
-        }
-    }
-    // Создание объекта задачи
+    if (!taskText) return alert("Введите задачу");
+    if (!todoTaskDate.valueAsDate) return alert("Выберите дату");
+
     const task = {
         id: generateUniqueId(),
-        date: taskDate,
+        date: todoTaskDate.valueAsDate.toLocaleDateString('en-us', { day: 'numeric', month: 'short' }),
         text: taskText,
-        priority: taskPriority,
+        priority: Array.from(todoTaskPriority).find(p => p.checked)?.value || "",
         status: "pending"
     };
+
     todoDB.push(task);
-    sortTasksByPriorityAndDate();
+    todoDB.sort((a, b) => compareTasks(a, b));
     saveTodoDB();
-    const taskItem = createTaskElement(task);
-    if (task.date === todoTaskDate.valueAsDate.toLocaleDateString('en-us', { day: 'numeric', month: 'short' })) {
-        todayTodoList.appendChild(taskItem);
-    } else {
-        laterTodoList.appendChild(taskItem);
-    }
     render();
     todoTaskText.value = "";
 }
 
-// Сортировка задач по приоритету и дате
-function sortTasksByPriorityAndDate() {
-    todoDB.sort((a, b) => {
-        const priorityOrder = { 'high': 1, 'medium': 2, 'low': 3 };
-        const dateA = new Date(a.date);
-        const dateB = new Date(b.date);
-        return priorityOrder[a.priority] - priorityOrder[b.priority] || dateA - dateB;
-    });
+// Функция сравнения для сортировки задач
+function compareTasks(a, b) {
+    const priorityOrder = { 'high': 1, 'medium': 2, 'low': 3 };
+    const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
+    if (priorityDiff !== 0) return priorityDiff;
+    return new Date(a.date) - new Date(b.date);
 }
 
 // Создание элемента задачи для отображения в списке
@@ -135,7 +112,7 @@ function createTaskElement(task) {
     checkbox.name = "item-done";
     checkbox.id = task.id;
     checkbox.checked = task.status === "completed";
-    checkbox.addEventListener("change", () => updateStatus(task.id));
+    // checkbox.addEventListener("change", () => updateStatus(task.id));
     const checkLabel = document.createElement("label");
     checkLabel.htmlFor = task.id;
 
@@ -163,6 +140,17 @@ function createTaskElement(task) {
 function setupEventListeners() {
     todoTaskAddBtn.addEventListener("click", addTask);
     seeAllButton.addEventListener('click', toggleShowCompleted);
+    todayTodoList.addEventListener('click', handleListClick);
+    laterTodoList.addEventListener('click', handleListClick);
+}
+
+// Обработчик кликов по списку
+function handleListClick(event) {
+    if (event.target.matches('.list__item-delete')) {
+        deleteTask(event.target.closest('.list__item').dataset.taskId);
+    } else if (event.target.matches('input[type="checkbox"]')) {
+        updateStatus(event.target.id);
+    }
 }
 
 // Удаление задачи из списка
@@ -173,11 +161,24 @@ function deleteTask(taskId) {
 }
 
 // Переключение отображения выполненных задач
-function toggleShowCompleted() {
+function toggleShowCompleted(event) {
+    event.preventDefault();
     showCompleted = !showCompleted;
     seeAllButton.textContent = showCompleted ? 'Hide completed' : 'See all';
+    const taskItems = document.querySelectorAll('.list__item');
 
-    render();
+    taskItems.forEach((taskItem) => {
+        const isCompleted = taskItem.classList.contains('completed-task');
+        if (!showCompleted && isCompleted) {
+            // taskItem.style.display = 'none';
+            taskItem.classList.add('hidden');
+
+        } else {
+            // taskItem.style.display = 'flex';
+            taskItem.classList.remove('hidden');
+
+        }
+    });
 }
 
 // Генерация уникального ID для задачи
@@ -185,15 +186,34 @@ function generateUniqueId() {
     return Math.random().toString(36).substring(2) + new Date().getTime().toString(36);
 }
 
-// Обновление статуса задачи
 function updateStatus(taskId) {
+    console.log("Updating status for task ID:", taskId); // Дебаг
     const selectedTask = todoDB.find(task => task.id === taskId);
     if (selectedTask) {
         selectedTask.status = selectedTask.status === "pending" ? "completed" : "pending";
         saveTodoDB();
-        renderTaskText(selectedTask, document.querySelectorAll('.list__item'));
-        // render();
-        // updateTaskCount();
+        updateTaskElementDisplay(selectedTask);
+        updateTaskCount();
+    }
+}
+
+function updateTaskElementDisplay(task) {
+    const taskItem = document.querySelector(`[data-task-id="${task.id}"]`);
+    if (!taskItem) {
+        console.log("Task item not found in DOM for ID:", task.id); // Дебаг
+        return;
+    }
+    if (taskItem) {
+        const taskContentElement = taskItem.querySelector('.list__item-content-title');
+        if (task.status === "completed") {
+            taskContentElement.classList.add('checked');
+            taskItem.classList.add('completed-task');
+            if (!showCompleted) taskItem.classList.add('hidden');
+        } else {
+            taskContentElement.classList.remove('checked');
+            taskItem.classList.remove('completed-task');
+            taskItem.classList.remove('hidden');
+        }
     }
 }
 
@@ -258,39 +278,41 @@ function render() {
         } else {
             laterTodoList.appendChild(taskItem);
         }
-    });
-
-    const taskItems = document.querySelectorAll('.list__item');
-
-    taskItems.forEach((taskItem) => {
-        const isCompleted = taskItem.classList.contains('completed-task');
-        if (!showCompleted && isCompleted) {
-            taskItem.style.display = 'none';
+        if (!showCompleted && task.status === "completed") {
+            // taskItem.style.display = 'none';
+            taskItem.classList.add('hidden');
 
         } else {
-            taskItem.style.display = 'flex';
+            // taskItem.style.display = 'flex';
+            taskItem.classList.remove('hidden');
 
         }
     });
     updateTaskCount();
 }
 
-// Отрисовка текста задачи с учетом статуса
+// Отрисовка текста задачи с учетом статуса и showCompleted
 function renderTaskText(task, taskItems) {
     for (const taskItem of taskItems) {
         if (taskItem.getAttribute('data-task-id') === task.id) {
             const taskContentElement = taskItem.querySelector('.list__item-content-title');
             if (task.status === "completed") {
                 taskContentElement.classList.add('checked');
+                taskItem.classList.add('completed-task');
+                taskItem.classList.add('hidden');
+                // taskItem.style.display = 'none';
             } else {
                 taskContentElement.classList.remove('checked');
+                taskItem.classList.remove('completed-task');
+                // taskItem.style.display = 'flex';
+                taskItem.classList.remove('hidden');
             }
         }
+
     }
     updateTaskCount();
 }
 
 
 init();
-
 
