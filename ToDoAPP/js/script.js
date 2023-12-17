@@ -192,7 +192,8 @@ function updateStatus(taskId) {
         selectedTask.status = selectedTask.status === "pending" ? "completed" : "pending";
         saveTodoDB();
         renderTaskText(selectedTask, document.querySelectorAll('.list__item'));
-        render();
+        // render();
+        // updateTaskCount();
     }
 }
 
